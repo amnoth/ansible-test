@@ -1,0 +1,25 @@
+---
+# code: language=ansible
+- name: Development Test
+  hosts: all
+  tasks:
+    # Install ufw
+    - name: Install ufw
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+    # Deny all incoming connections
+    - name: Deny all incoming connections
+      ansible.builtin.ufw:
+        rule: deny
+        direction: incoming
+    # Allow all ssh connections
+    - name: Allow all ssh connections
+      ansible.builtin.ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+    # Activate ufw
+    - name: Activate ufw
+      ansible.builtin.ufw:
+        state: enabled
