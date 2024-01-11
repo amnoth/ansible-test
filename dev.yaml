@@ -1,7 +1,7 @@
 ---
 # code: language=ansible
 - name: Development Test
-  hosts: all
+  hosts: localhost
   tasks:
     # Install ufw
     - name: Install ufw
