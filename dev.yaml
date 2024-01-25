@@ -7,11 +7,11 @@
       ansible.builtin.apt:
         name: ufw
         state: present
-    - name: "UFW - Deny all incoming connections"
-      community.general.ufw:
-        rule: deny
-        direction: incoming
-        state: enabled
+    # - name: "UFW - Deny all incoming connections"
+    #   community.general.ufw:
+    #     rule: deny
+    #     direction: incoming
+    #     state: enabled
     - name: "UFW - Allow all outgoing connections"
       community.general.ufw:
         rule: allow
