@@ -3,6 +3,14 @@
   hosts: localhost
   connection: local
   tasks:
+    - name: "Create src dir in home"
+      file:
+        path: ~/src
+        state: directory
+        mode: 0755
+      become: yes
+      become_user: root
+      become_method: sudo
     - name: "Build stable and install neovim deb"
       shell: |
         git git clone https://github.com/neovim/neovim
