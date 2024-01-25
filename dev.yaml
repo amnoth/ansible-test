@@ -3,26 +3,7 @@
   hosts: localhost
   connection: local
   tasks:
-    - name: "UFW - Install"
-      ansible.builtin.apt:
-        name: ufw
+    - name: "Install neovim"
+      apt:
+        name: nvim
         state: present
-    # - name: "UFW - Deny all incoming connections"
-    #   community.general.ufw:
-    #     rule: deny
-    #     direction: incoming
-    #     state: enabled
-    - name: "UFW - Allow all outgoing connections"
-      community.general.ufw:
-        rule: allow
-        direction: outgoing
-        state: enabled
-    - name: "UFW - Allow SSH connections from 192.168.62.0/24"
-      community.general.ufw:
-        rule: allow
-        direction: incoming
-        port: 22
-        # from_ip: 192.168.62.0/24
-    # - name: "UFW - Enable"
-    #   community.general.ufw:
-    #     state: enabled
