@@ -23,6 +23,6 @@
         direction: incoming
         port: 22
         # from_ip: 192.168.62.0/24
-    - name: "UFW - Enable"
-      community.general.ufw:
-        state: enabled
+    # - name: "UFW - Enable"
+    #   community.general.ufw:
+    #     state: enabled
