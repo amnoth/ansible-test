@@ -1,26 +1,28 @@
 ---
-# code: language=ansible
-- name: Development Test
+- name: "Development Station"
   hosts: localhost
-  user: root
+  connection: local
   tasks:
-    # Install ufw
-    - name: Install ufw
+    - name: "UFW - Install"
       ansible.builtin.apt:
         name: ufw
         state: present
-    # Deny all incoming connections
-    - name: Deny all incoming connections
-      ansible.builtin.ufw:
+    - name: "UFW - Deny all incoming connections"
+      community.general.ufw:
         rule: deny
         direction: incoming
-    # Allow all ssh connections
-    - name: Allow all ssh connections
-      ansible.builtin.ufw:
+        state: enabled
+    - name: "UFW - Allow all outgoing connections"
+      community.general.ufw:
         rule: allow
+        direction: outgoing
+        state: enabled
+    - name: "UFW - Allow SSH connections from 192.168.62.0/24"
+      community.general.ufw:
+        rule: allow
+        direction: incoming
         port: 22
-        proto: tcp
-    # Activate ufw
-    - name: Activate ufw
-      ansible.builtin.ufw:
+        from_ip: 192.168.62.0/24
+    - name: "UFW - Enable"
+      community.general.ufw:
         state: enabled
