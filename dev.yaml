@@ -11,6 +11,19 @@
       become: yes
       become_user: root
       become_method: sudo
+    - name: "Install neovim prerequisites"
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - ninja-build
+        - gettext
+        - cmake
+        - unzip
+        - curl
+      become: yes
+      become_user: root
+      become_method: sudo
     - name: "Build stable and install neovim deb"
       shell: |
         git clone https://github.com/neovim/neovim
