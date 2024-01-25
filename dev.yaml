@@ -3,7 +3,16 @@
   hosts: localhost
   connection: local
   tasks:
-    - name: "Install neovim"
-      apt:
-        name: nvim
-        state: present
+    - name: "Build stable and install neovim deb"
+      shell: |
+        git git clone https://github.com/neovim/neovim
+        cd neovim
+        git checkout stable
+        make CMAKE_BUILD_TYPE=RelWithDebInfo
+        cd build 
+        cpack -G DEB && sudo dpkg -i nvim-linux64.deb
+      args:
+        chdir: ~/src
+      become: yes
+      become_user: root
+      become_method: sudo
