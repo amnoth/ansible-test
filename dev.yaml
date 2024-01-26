@@ -3,6 +3,19 @@
   hosts: localhost
   connection: local
   tasks:
+    # Unattended Upgrades
+    - name: Install Unattended Upgrades
+      ansible.builtin.apt:
+        state: present
+        name:
+          - unattended-upgrades
+    - name: Enable Unattended Upgrades Service
+      ansible.builtin.systemd:
+        name: unattended-upgrades.service
+        state: started
+        enabled: true
+
+    # Shell customizations
     - name: "Install zsh"
       apt:
         name: zsh
@@ -10,7 +23,6 @@
       become: true
       become_user: root
       become_method: sudo
-
     - name: "Install & configure oh-my-zsh"
       block:
         - name: "Install oh-my-zsh"
@@ -27,13 +39,13 @@
             regex: "^plugins=\\(.*\\)"
             line: "plugins=(git zsh-syntax-highlighting)"
             state: present
-        - name: "Install catppuccino zsh-syntax-highlighting"
+        - name: "Install catppuccin zsh-syntax-highlighting"
           shell: |
             git clone https://github.com/catppuccin/zsh-syntax-highlighting.git
             cd zsh-syntax-highlighting/themes/
             mkdir -p ~/.zsh
             cp -v catppuccin_mocha-zsh-syntax-highlighting.zsh ~/.zsh/
-        - name: "Enable catppuccino zsh-syntax-highlighting"
+        - name: "Enable catppuccin zsh-syntax-highlighting"
           lineinfile:
             path: ~/.zshrc
             insertbefore: "plugins=\\(.*\\)"
@@ -64,7 +76,19 @@
               # complete -F __start_kubectl kn
 
             state: present
+        - name: "Install helm"
+          shell: |
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        - name: "Enable helm autocompletion"
+          lineinfile:
+            path: ~/.zshrc
+            insertafter: "plugins=\\(.*\\)"
+            line: |
 
+              source <(helm completion zsh)
+              alias h=helm
+
+            state: present
       become: true
       become_user: amnoth
       become_method: sudo
