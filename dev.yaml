@@ -23,13 +23,100 @@
       become: true
       become_user: root
       become_method: sudo
+    - name: "Install tmux"
+      apt:
+        name: tmux
+        state: present
+      become: true
+      become_user: root
+      become_method: sudo
+    # oh-my-zsh
     - name: "Install & configure oh-my-zsh"
       block:
+        # tmux config
+        - name: "Install tpm"
+          shell: |
+            git clone https://github.com/tmux-plugins/tmp ~/.tmux/plugins/tpm
+          args:
+            chdir: ~
+        # make sure ~/.config/tmux/tmux.conf exists
+        - name: "Create ~/.config/tmux directory"
+          file:
+            path: ~/.config/tmux
+            state: directory
+            mode: 0755
+        # create ~/.config/tmux/tmux.conf
+        - name: "Create ~/.config/tmux/tmux.conf"
+          file:
+            path: ~/.config/tmux/tmux.conf
+            state: touch
+            mode: 0644
+        # append to the end of ~/.config/tmux/tmux.conf
+        - name: "Append to ~/.config/tmux/tmux.conf"
+          lineinfile:
+            path: ~/.config/tmux/tmux.conf
+            line: |
+              # https://github.com/dreamsofcode-io/tmux/blob/main/tmux.conf
+              set-option -sa terminal-overrides ",xterm*:Tc"
+              set -g mouse on
+
+              unbind C-b
+              set -g prefix C-Space
+              bind C-Space send-prefix
+
+              # Vim style pane selection
+              bind h select-pane -L
+              bind j select-pane -D 
+              bind k select-pane -U
+              bind l select-pane -R
+
+              # Start windows and panes at 1, not 0
+              set -g base-index 1
+              set -g pane-base-index 1
+              set-window-option -g pane-base-index 1
+              set-option -g renumber-windows on
+
+              # Use Alt-arrow keys without prefix key to switch panes
+              bind -n M-Left select-pane -L
+              bind -n M-Right select-pane -R
+              bind -n M-Up select-pane -U
+              bind -n M-Down select-pane -D
+
+              # Shift arrow to switch windows
+              bind -n S-Left  previous-window
+              bind -n S-Right next-window
+
+              # Shift Alt vim keys to switch windows
+              bind -n M-H previous-window
+              bind -n M-L next-window
+
+              set -g @catppuccin_flavour 'mocha'
+
+              set -g @plugin 'tmux-plugins/tpm'
+              set -g @plugin 'tmux-plugins/tmux-sensible'
+              set -g @plugin 'christoomey/vim-tmux-navigator'
+              set -g @plugin 'dreamsofcode-io/catppuccin-tmux'
+              set -g @plugin 'tmux-plugins/tmux-yank'
+
+              run '~/.tmux/plugins/tpm/tpm'
+
+              # set vi-mode
+              set-window-option -g mode-keys vi
+              # keybindings
+              bind-key -T copy-mode-vi v send-keys -X begin-selection
+              bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+              bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+              bind '"' split-window -v -c "#{pane_current_path}"
+              bind % split-window -h -c "#{pane_current_path}"
+
+        # oh-my-zsh
         - name: "Install oh-my-zsh"
           shell: |
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
           args:
             chdir: ~
+        zsh-autosuggestions
         - name: "Install zsh-syntax-highlighting as a plugin"
           shell: |
             git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
@@ -51,6 +138,7 @@
             insertbefore: "plugins=\\(.*\\)"
             line: "source ~/.zsh/catppuccin_mocha-zsh-syntax-highlighting.zsh"
             state: present
+        # kubectl
         - name: "Install kubectl"
           shell: |
             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -76,6 +164,7 @@
               # complete -F __start_kubectl kn
 
             state: present
+        # helm
         - name: "Install helm"
           shell: |
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -89,8 +178,67 @@
               alias h=helm
 
             state: present
+        # flux
+        - name: "Install flux cli"
+          shell: |
+            curl -s https://fluxcd.io/install.sh | sudo bash
+        - name: "Enable flux cli autocompletion"
+          lineinfile:
+            path: ~/.zshrc
+            insertafter: "plugins=\\(.*\\)"
+            line: |
+
+              command -v flux >/dev/null && . <(flux completion zsh)
+
+            state: present
       become: true
       become_user: amnoth
+      become_method: sudo
+    
+    # docker
+    - name: "Install & configure docker"
+      block:
+        - name: "Update apt cache"
+          ansible.builtin.apt:
+            update_cache: true
+            cache_valid_time: 3600
+        - name: "Install dependencies"
+          ansible.builtin.apt:
+            name: "{{ packages }}"
+            state: present
+            update_cache: true
+          vars:
+            packages:
+              - ca-certificates
+              - curl
+              - gnupg
+        - name: "Add apt signing key for docker"
+          ansible.builtin.apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+        - name: "Add apt repository for stable Docker version"
+          ansible.builtin.apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+            state: present
+        - name: "Install Docker"
+          ansible.builtin.apt:
+            name: "{{ packages }}"
+            state: present
+            update_cache: true
+          vars:
+            packages:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+        - name: "Add users to docker group"
+          ansible.builtin.user:
+            name: "amnoth"
+            append: true
+            groups: docker
+      become: true
+      become_user: root
       become_method: sudo
 
     - name: "Install & configure Neovim"
