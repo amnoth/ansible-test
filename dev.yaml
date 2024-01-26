@@ -151,7 +151,7 @@
             mode: 0644
         - name: "Download .p10k.zsh file"
           get_url:
-            url: https://raw.githubusercontent.com/dreamsofcode-io/dotfiles/main/.p10k.zsh
+            url: https://raw.githubusercontent.com/amnoth/ansible-test/main/.p10k.zsh
             dest: ~/.p10k.zsh
             mode: 0644
         # zsh-autosuggestions
