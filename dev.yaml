@@ -116,6 +116,15 @@
             sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
           args:
             chdir: ~
+        - name: "Install powerline10k theme"
+          shell: |
+            git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+        - name: "Enable powerline10k theme"
+          lineinfile:
+            path: ~/.zshrc
+            regex: "^ZSH_THEME=.*"
+            line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
+            state: present
         # zsh-autosuggestions
         - name: "Install zsh-syntax-highlighting as a plugin"
           shell: |
