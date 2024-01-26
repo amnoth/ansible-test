@@ -6,7 +6,10 @@
     - name: Get deb architecture
       ansible.builtin.shell: |
         dpkg --print-architecture
-      register: deb_architecture
+      register: deb_architecture_output
+    - name: Set deb architecture fact
+      ansible.builtin.set_fact:
+        deb_architecture: "{{ deb_architecture_output.stdout }}"
     # unattended upgrades
     - name: Install Unattended Upgrades
       ansible.builtin.apt:
