@@ -85,17 +85,17 @@
         # download config files
         - name: "Download ~/.zshrc"
           get_url:
-            url: {{ zshrc_url }}
+            url: "{{ zshrc_url }}"
             dest: ~/.zshrc
             mode: 0644
         - name: "Download ~/.config/tmux/tmux.conf"
           get_url:
-            url: {{ tmux_conf_url }}
+            url: "{{ tmux_conf_url }}"
             dest: ~/.config/tmux/tmux.conf
             mode: 0644
         - name: "Download ~/.p10k.zsh"
           get_url:
-            url: {{ p10k_zsh_url }}
+            url: "{{ p10k_zsh_url }}"
             dest: ~/.p10k.zsh
             mode: 0644
       vars:
