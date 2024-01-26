@@ -1,0 +1,33 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - curl
+  - git
+  - qemu-guest-agent
+  - software-properties-common
+  - zsh
+runcmd:
+  - [systemctl, enable, --now, qemu-guest-agent.service]
+users:
+  - default
+  - name: amnoth
+    gecos: Amnoth
+    shell: /bin/zsh
+    lock_passwd: true
+    groups:
+      - sudo
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_import_id:
+      - gh:amnoth
+ansible:
+  package_name: ansible
+  install_method: distro
+  pull:
+    url: "https://github.com/amnoth/ansible-test.git"
+    playbook_name: dev.yaml
+    connection: local
+apt:
+  sources:
+    ansible-ubuntu-ppa:
+      source: "ppa:ansible/ansible"
