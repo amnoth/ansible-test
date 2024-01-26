@@ -3,7 +3,7 @@
   hosts: localhost
   connection: local
   tasks:
-    # Unattended Upgrades
+    # unattended upgrades
     - name: Install Unattended Upgrades
       ansible.builtin.apt:
         state: present
@@ -15,7 +15,7 @@
         state: started
         enabled: true
 
-    # Shell customizations
+    # shell install
     - name: "Install zsh"
       apt:
         name: zsh
@@ -30,86 +30,21 @@
       become: true
       become_user: root
       become_method: sudo
-    # oh-my-zsh
-    - name: "Install & configure oh-my-zsh"
+    # shell config
+    - name: "Configure shell"
       block:
         # tmux config
-        - name: "Install tpm"
+        - name: "Install tmux package manager"
           shell: |
             git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
           args:
             chdir: ~
-        # make sure ~/.config/tmux/tmux.conf exists
+        # make sure ~/.config/tmux/ exists
         - name: "Create ~/.config/tmux directory"
           file:
             path: ~/.config/tmux
             state: directory
             mode: 0755
-        # create ~/.config/tmux/tmux.conf
-        - name: "Create ~/.config/tmux/tmux.conf"
-          file:
-            path: ~/.config/tmux/tmux.conf
-            state: touch
-            mode: 0644
-        # append to the end of ~/.config/tmux/tmux.conf
-        - name: "Append to ~/.config/tmux/tmux.conf"
-          lineinfile:
-            path: ~/.config/tmux/tmux.conf
-            line: |
-              # https://github.com/dreamsofcode-io/tmux/blob/main/tmux.conf
-              set-option -sa terminal-overrides ",xterm*:Tc"
-              set -g mouse on
-
-              unbind C-b
-              set -g prefix C-Space
-              bind C-Space send-prefix
-
-              # Vim style pane selection
-              bind h select-pane -L
-              bind j select-pane -D 
-              bind k select-pane -U
-              bind l select-pane -R
-
-              # Start windows and panes at 1, not 0
-              set -g base-index 1
-              set -g pane-base-index 1
-              set-window-option -g pane-base-index 1
-              set-option -g renumber-windows on
-
-              # Use Alt-arrow keys without prefix key to switch panes
-              bind -n M-Left select-pane -L
-              bind -n M-Right select-pane -R
-              bind -n M-Up select-pane -U
-              bind -n M-Down select-pane -D
-
-              # Shift arrow to switch windows
-              bind -n S-Left  previous-window
-              bind -n S-Right next-window
-
-              # Shift Alt vim keys to switch windows
-              bind -n M-H previous-window
-              bind -n M-L next-window
-
-              set -g @catppuccin_flavour 'mocha'
-
-              set -g @plugin 'tmux-plugins/tpm'
-              set -g @plugin 'tmux-plugins/tmux-sensible'
-              set -g @plugin 'christoomey/vim-tmux-navigator'
-              set -g @plugin 'dreamsofcode-io/catppuccin-tmux'
-              set -g @plugin 'tmux-plugins/tmux-yank'
-
-              run '~/.tmux/plugins/tpm/tpm'
-
-              # set vi-mode
-              set-window-option -g mode-keys vi
-              # keybindings
-              bind-key -T copy-mode-vi v send-keys -X begin-selection
-              bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
-              bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
-
-              bind '"' split-window -v -c "#{pane_current_path}"
-              bind % split-window -h -c "#{pane_current_path}"
-
         # oh-my-zsh
         - name: "Install oh-my-zsh"
           shell: |
@@ -119,63 +54,16 @@
         - name: "Install powerline10k theme"
           shell: |
             git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-        - name: "Enable powerline10k theme"
-          lineinfile:
-            path: ~/.zshrc
-            regex: "^ZSH_THEME=.*"
-            line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
-            state: present
-        # append to top of the ~/.zshrc
-        - name: "Powerline 10k zsh config"
-          lineinfile:
-            path: ~/.zshrc
-            insertbefore: BOF
-            line: |
-              # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-              # Initialization code that may require console input (password prompts, [y/n]
-              # confirmations, etc.) must go above this block; everything else may go below.
-              if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-                source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-              fi
-        - name: "Powerline 10k config"
-          lineinfile:
-            path: ~/.zshrc
-            insertafter: EOF
-            line: |
-              # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-              [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-        - name: "Create .p10k.zsh file"
-          file:
-            path: ~/.p10k.zsh
-            state: touch
-            mode: 0644
-        - name: "Download .p10k.zsh file"
-          get_url:
-            url: https://raw.githubusercontent.com/amnoth/ansible-test/main/.p10k.zsh
-            dest: ~/.p10k.zsh
-            mode: 0644
         # zsh-autosuggestions
         - name: "Install zsh-syntax-highlighting as a plugin"
           shell: |
             git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-        - name: "Enable zsh-syntax-highlighting plugin"
-          lineinfile:
-            path: ~/.zshrc
-            regex: "^plugins=\\(.*\\)"
-            line: "plugins=(git zsh-syntax-highlighting)"
-            state: present
         - name: "Install catppuccin zsh-syntax-highlighting"
           shell: |
             git clone https://github.com/catppuccin/zsh-syntax-highlighting.git
             cd zsh-syntax-highlighting/themes/
             mkdir -p ~/.zsh
             cp -v catppuccin_mocha-zsh-syntax-highlighting.zsh ~/.zsh/
-        - name: "Enable catppuccin zsh-syntax-highlighting"
-          lineinfile:
-            path: ~/.zshrc
-            insertbefore: "plugins=\\(.*\\)"
-            line: "source ~/.zsh/catppuccin_mocha-zsh-syntax-highlighting.zsh"
-            state: present
         # kubectl
         - name: "Install kubectl"
           shell: |
@@ -186,49 +74,34 @@
             sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
             sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
             sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
-        - name: "Enable kubectl autocompletion"
-          lineinfile:
-            path: ~/.zshrc
-            insertafter: "plugins=\\(.*\\)"
-            line: |
-
-              source <(kubectl completion zsh)
-              alias k=kubectl
-              alias kx=kubectx
-              alias kn=kubens
-              alias ke='kubectl get events --all-namespaces --sort-by=.metadata.creationTimestamp -w'
-              # complete -F __start_kubectl k
-              # complete -F __start_kubectl kx
-              # complete -F __start_kubectl kn
-
-            state: present
         # helm
         - name: "Install helm"
           shell: |
             curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-        - name: "Enable helm autocompletion"
-          lineinfile:
-            path: ~/.zshrc
-            insertafter: "plugins=\\(.*\\)"
-            line: |
-
-              source <(helm completion zsh)
-              alias h=helm
-
-            state: present
         # flux
         - name: "Install flux cli"
           shell: |
             curl -s https://fluxcd.io/install.sh | sudo bash
-        - name: "Enable flux cli autocompletion"
-          lineinfile:
-            path: ~/.zshrc
-            insertafter: "plugins=\\(.*\\)"
-            line: |
-
-              command -v flux >/dev/null && . <(flux completion zsh)
-
-            state: present
+        # download config files
+        - name: "Download ~/.zshrc"
+          get_url:
+            url: { { zshrc_url } }
+            dest: ~/.zshrc
+            mode: 0644
+        - name: "Download ~/.config/tmux/tmux.conf"
+          get_url:
+            url: { { tmux_conf_url } }
+            dest: ~/.config/tmux/tmux.conf
+            mode: 0644
+        - name: "Download ~/.p10k.zsh"
+          get_url:
+            url: { { p10k_zsh_url } }
+            dest: ~/.p10k.zsh
+            mode: 0644
+      vars:
+        zshrc_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/.zshrc
+        tmux_conf_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/tmux.conf
+        p10k_zsh_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/.p10k.zsh
       become: true
       become_user: amnoth
       become_method: sudo
