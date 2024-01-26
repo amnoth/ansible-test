@@ -36,7 +36,7 @@
         # tmux config
         - name: "Install tpm"
           shell: |
-            git clone https://github.com/tmux-plugins/tmp ~/.tmux/plugins/tpm
+            git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
           args:
             chdir: ~
         # make sure ~/.config/tmux/tmux.conf exists
