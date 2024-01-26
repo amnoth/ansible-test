@@ -59,9 +59,9 @@
               alias kx=kubectx
               alias kn=kubens
               alias ke='kubectl get events --all-namespaces --sort-by=.metadata.creationTimestamp -w'
-              complete -F __start_kubectl k
-              complete -F __start_kubectl kx
-              complete -F __start_kubectl kn
+              # complete -F __start_kubectl k
+              # complete -F __start_kubectl kx
+              # complete -F __start_kubectl kn
 
             state: present
 
