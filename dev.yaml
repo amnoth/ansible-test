@@ -248,3 +248,45 @@
           ansible.builtin.apt:
             name: nodejs
             state: present
+        # Swift (todo: add key check, and arm64 check)
+        - name: Swift prerequisites
+            # https://download.swift.org/swift-{{ swift_version  }}-release/ubuntu2204/swift-{{ swift_version  }}-RELEASE/swift-{{ swift_version  }}-RELEASE-ubuntu22.04.tar.gz
+          ansible.builtin.apt:
+            name:
+              - binutils
+              - git
+              - gnupg2
+              - libc6-dev
+              - libcurl4-openssl-dev
+              - libedit2
+              - libgcc-9-dev
+              - libpython3.10 # libpython3.8
+              - libsqlite3-0
+              - libstdc++-9-dev
+              - libxml2-dev
+              - libz3-dev
+              - pkg-config
+              - tzdata
+              - unzip
+              - zlib1g-dev
+            state: present
+        - name: Download swift
+          vars:
+            swift_version: "5.9.2"
+          ansible.builtin.get_url:
+            url: "https://download.swift.org/swift-{{ swift_version }}-release/ubuntu2204/swift-{{ swift_version }}-RELEASE/swift-{{ swift_version }}-RELEASE-ubuntu22.04.tar.gz"
+            dest: "/tmp/swift.tar.gz"
+            mode: "0644"
+        - name: Extract swift
+          ansible.builtin.unarchive:
+            src: "/tmp/swift.tar.gz"
+            dest: "/"
+            extra_opts:
+              - "--strip-components=1"
+            remote_src: true
+            creates: "/tmp/swift/usr/bin/swift"
+        - name: Set chmod 755 /usr/lib/swift
+          ansible.builtin.file:
+            path: "/usr/lib/swift"
+            recurse: true
+            mode: "0755"
