@@ -25,6 +25,7 @@
               - neovim
               - tmux
               - docker
+              - docker-compose
               - kubectl
               - helm
               - flux2-cli
