@@ -1,0 +1,14 @@
+#cloud-config
+packages:
+  - git
+  - curl
+  - qemu-guest-agent
+runcmd:
+  - [systemctl, enable, --now, qemu-guest-agent.service]
+ansible:
+  install_method: distro
+  package_name: ansible
+  pull:
+    url: "https://github.com/amnoth/ansible-test.git"
+    playbook_name: dev-opensuse.yaml
+    connection: local
