@@ -34,6 +34,11 @@
           ansible.builtin.group:
             name: docker
             state: present
+        - name: Start and enable docker
+          ansible.builtin.systemd_service:
+            name: docker
+            state: started
+            enabled: true
         - name: Create amnoth user
           ansible.builtin.user:
             name: amnoth
@@ -42,6 +47,13 @@
               - docker
             createhome: true
             state: present
+        - name: Add root to sudoers
+          ansible.builtin.copy:
+            content: "root ALL=(ALL:ALL) ALL"
+            dest: "/etc/sudoers.d/root"
+            owner: root
+            group: root
+            mode: "0440"
         - name: Add amnoth to sudoers
           ansible.builtin.copy:
             content: "amnoth ALL=(ALL) NOPASSWD:ALL"
