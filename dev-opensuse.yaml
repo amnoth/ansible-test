@@ -1,0 +1,36 @@
+---
+- name: "Development Station"
+  hosts: localhost
+  connection: local
+  tasks:
+    # shell install
+    - name: Configure base
+      become: true
+      become_user: root
+      become_method: ansible.builtin.sudo
+      block:
+        - name: Install zsh
+          community.general.zypper:
+            name: 
+              - zsh
+              - git
+              - curl
+            state: present
+        - name: Create amnoth user
+          ansible.builtin.user:
+            name: amnoth
+            shell: /bin/zsh
+            createhome: true
+            state: present
+        - name: Add amnoth to sudoers
+          ansible.builtin.copy:
+            content: "amnoth ALL=(ALL) NOPASSWD:ALL"
+            dest: "/etc/sudoers.d/amnoth"
+            owner: root
+            group: root
+            mode: "0440"
+        - name: Add authorized key from github
+          ansible.posix.authorized_key:
+            user: amnoth
+            state: present
+            key: "https://www.github.com/amnoth.keys"
