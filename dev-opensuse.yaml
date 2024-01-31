@@ -9,12 +9,26 @@
       become_user: root
       become_method: ansible.builtin.sudo
       block:
-        - name: Install zsh
+        - name: Add kubernetes repo
+          community.general.zypper_repository:
+            name: kubernetes
+            repo: https://pkgs.k8s.io/core:/stable:/v1.29/rpm/
+            runrefresh: true
+            auto_import_keys: true
+            state: present
+        - name: Install baseline packages
           community.general.zypper:
-            name: 
+            name:
               - zsh
               - git
               - curl
+              - neovim
+              - tmux
+              - docker
+              - kubectl
+              - helm
+              - flux2-cli
+              - ansible-lint
             state: present
         - name: Create amnoth user
           ansible.builtin.user:
@@ -34,3 +48,86 @@
             user: amnoth
             state: present
             key: "https://www.github.com/amnoth.keys"
+        - name: Neovim - Use nvim for vi
+          community.general.alternatives:
+            name: vi
+            path: /usr/bin/nvim
+            link: /usr/bin/vi
+        - name: Neovim - Use nvim for vim
+          community.general.alternatives:
+            name: vim
+            path: /usr/bin/nvim
+            link: /usr/bin/vim
+        - name: Neovim - Use nvim for editor
+          community.general.alternatives:
+            name: editor
+            path: /usr/bin/nvim
+            link: /usr/bin/editor
+          # shell config
+    - name: Configure shell
+      become: true
+      become_user: amnoth
+      become_method: ansible.builtin.sudo
+      vars:
+        zshrc_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/.zshrc
+        tmux_conf_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/tmux.conf
+        p10k_zsh_url: https://raw.githubusercontent.com/amnoth/dotfiles/main/.p10k.zsh
+      block:
+        # tmux config
+        - name: Install tmux package manager # noqa: latest
+          ansible.builtin.git:
+            repo: https://github.com/tmux-plugins/tpm
+            dest: ~/.tmux/plugins/tpm
+            version: HEAD
+        # make sure ~/.config/tmux/ exists
+        - name: Create ~/.config/tmux directory
+          ansible.builtin.file:
+            path: ~/.config/tmux
+            state: directory
+            mode: "0755"
+        # oh-my-zsh
+        - name: Install oh-my-zsh
+          ansible.builtin.shell: |
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+          args:
+            chdir: ~
+        - name: Install powerline10k # noqa: latest
+          ansible.builtin.git:
+            repo: https://github.com/romkatv/powerlevel10k.git
+            depth: 1
+            version: HEAD
+            dest: ~/.oh-my-zsh/custom/themes/powerlevel10k
+        # zsh-autosuggestions
+        - name: Install zsh-syntax-highlighting # noqa: latest
+          ansible.builtin.git:
+            repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+            version: HEAD
+            dest: ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+        - name: Install catppuccin zsh-syntax-highlighting
+          ansible.builtin.shell: |
+            git clone https://github.com/catppuccin/zsh-syntax-highlighting.git
+            cd zsh-syntax-highlighting/themes/
+            mkdir -p ~/.zsh
+            cp -v catppuccin_mocha-zsh-syntax-highlighting.zsh ~/.zsh/
+        # kubectl
+        - name: Install kubectx
+          ansible.builtin.shell: |
+            sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+            sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+            sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+        # download config files
+        - name: "Download ~/.zshrc"
+          ansible.builtin.get_url:
+            url: "{{ zshrc_url }}"
+            dest: ~/.zshrc
+            mode: "0644"
+        - name: "Download ~/.config/tmux/tmux.conf"
+          ansible.builtin.get_url:
+            url: "{{ tmux_conf_url }}"
+            dest: ~/.config/tmux/tmux.conf
+            mode: "0644"
+        - name: "Download ~/.p10k.zsh"
+          ansible.builtin.get_url:
+            url: "{{ p10k_zsh_url }}"
+            dest: ~/.p10k.zsh
+            mode: "0644"
