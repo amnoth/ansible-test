@@ -30,7 +30,12 @@
               - helm
               - flux2-cli
               - ansible-lint
+            state: present
+        - name: Install baseline patterns
+          community.general.zypper:
+            name:
               - devel_basis
+            type: pattern
             state: present
         - name: Add docker group
           ansible.builtin.group:
