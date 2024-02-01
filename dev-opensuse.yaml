@@ -30,6 +30,7 @@
               - helm
               - flux2-cli
               - ansible-lint
+              - devel_basis
             state: present
         - name: Add docker group
           ansible.builtin.group:
