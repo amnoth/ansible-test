@@ -30,6 +30,9 @@
               - helm
               - flux2-cli
               - ansible-lint
+              - npm21
+              - go
+              - go-doc
             state: present
         - name: Install baseline patterns
           community.general.zypper:
