@@ -4,7 +4,7 @@
   connection: local
   tasks:
     vars:
-        username: amnoth
+      username: amnoth
     - name: Get deb architecture
       ansible.builtin.shell: |
         dpkg --print-architecture
