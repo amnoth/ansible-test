@@ -2,9 +2,9 @@
 - name: "Development Station"
   hosts: localhost
   connection: local
+  vars:
+    username: amnoth
   tasks:
-    vars:
-      username: amnoth
     - name: Get deb architecture
       ansible.builtin.shell: |
         dpkg --print-architecture
