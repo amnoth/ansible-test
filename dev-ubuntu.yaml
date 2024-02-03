@@ -47,6 +47,7 @@
           ansible.builtin.get_url:
             url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
             dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+            mode: "0644"
         - name: kubectl | add apt repository
           ansible.builtin.apt_repository:
             repo: deb [arch={{ deb_architecture }} signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
@@ -70,6 +71,7 @@
           ansible.builtin.get_url:
             url: https://baltocdn.com/helm/signing.asc
             dest: /etc/apt/keyrings/helm-apt-keyring.asc
+            mode: "0644"
         - name: helm | add apt repository
           ansible.builtin.apt_repository:
             repo: deb [arch={{ deb_architecture }} signed-by=/etc/apt/keyrings/helm-apt-keyring.asc] https://baltocdn.com/helm/stable/debian/ all main
@@ -84,9 +86,14 @@
     - name: flux
       become: true
       block:
-        - name: flux | install # poorly...
+        - name: flux | download installer
+          ansible.builtin.get_url:
+            url: https://fluxcd.io/install.sh
+            dest: /tmp/flux-install.sh
+            mode: "0755"
+        - name: flux | install
           ansible.builtin.shell: |
-            curl -s https://fluxcd.io/install.sh | sudo bash
+            /tmp/flux-install.sh
     # docker
     - name: docker
       become: true
@@ -104,6 +111,7 @@
           ansible.builtin.get_url:
             url: https://download.docker.com/linux/ubuntu/gpg
             dest: /etc/apt/keyrings/docker-apt-keyring.pgp
+            mode: "0644"
         - name: docker | add apt repository
           ansible.builtin.apt_repository:
             repo: deb [arch={{ deb_architecture }} signed-by=/etc/apt/keyrings/docker-apt-keyring.pgp] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
@@ -143,16 +151,18 @@
               - unzip
               - curl
             state: present
+        - name: neovim | git clone and checkout stable
+          ansible.builtin.git:
+            repo: https://github.com/neovim/neovim.git
+            dest: ~/src/neovim
+            version: stable
         - name: neovim | build stable release & install from deb package
           ansible.builtin.shell: |
-            git clone https://github.com/neovim/neovim
-            cd neovim
-            git checkout stable
             make CMAKE_BUILD_TYPE=RelWithDebInfo
             cd build
             cpack -G DEB && sudo dpkg -i nvim-linux64.deb
           args:
-            chdir: ~/src
+            chdir: ~/src/neovim
         - name: neovim | use nvim for vi
           community.general.alternatives:
             name: vi
@@ -233,6 +243,7 @@
           ansible.builtin.get_url:
             url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
             dest: /etc/apt/keyrings/nodesource-apt-keyring.asc
+            mode: "0644"
         - name: dev tools | nodejs | add apt repository
           ansible.builtin.apt_repository:
             repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/nodesource-apt-keyring.asc] https://deb.nodesource.com/node_{{ node_version }} nodistro main"
@@ -259,11 +270,21 @@
             path: ~/.config/tmux
             state: directory
             mode: "0755"
-        - name: user config | install oh-my-zsh
+        - name: user config | oh-my-zsh | check for $ZSH
+          ansible.builtin.stat:
+            path: ~/.oh-my-zsh
+          register: oh_my_zsh_check
+        - name: user config | oh-my-zsh | download installer
+          ansible.builtin.get_url:
+            url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+            dest: /tmp/oh-my-zsh-install.sh
+            mode: "0755"
+        - name: user config | oh-my-zsh | install
           ansible.builtin.shell: |
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+            /tmp/oh-my-zsh-install.sh
           args:
             chdir: ~
+          when: not oh_my_zsh_check.stat.exists
         - name: user config | install powerline10k # noqa: latest
           ansible.builtin.git:
             repo: https://github.com/romkatv/powerlevel10k.git
@@ -275,12 +296,21 @@
             repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
             version: HEAD
             dest: ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-        - name: user config | install catppuccin zsh-syntax-highlighting
-          ansible.builtin.shell: |
-            git clone https://github.com/catppuccin/zsh-syntax-highlighting.git
-            cd zsh-syntax-highlighting/themes/
-            mkdir -p ~/.zsh
-            cp -v catppuccin_mocha-zsh-syntax-highlighting.zsh ~/.zsh/
+        - name: user config | catppuccin zsh-syntax-highlighting | clone repo # noqa: latest
+          ansible.builtin.git:
+            repo: https://github.com/catppuccin/zsh-syntax-highlighting.git
+            dest: /tmp/catppuccin/zsh-syntax-highlighting
+            version: HEAD
+        - name: user config | catppuccin zsh-syntax-highlighting | create ~/.zsh directory
+          ansible.builtin.file:
+            path: ~/.zsh
+            state: directory
+            mode: "0755"
+        - name: user config | catppuccin zsh-syntax-highlighting | copy to themes
+          ansible.builtin.copy:
+            src: /tmp/catppuccin/zsh-syntax-highlighting/themes/catppuccin_mocha-zsh-syntax-highlighting.zsh
+            dest: ~/.zsh/
+            mode: "0644"
         - name: user config | download dotfiles # noqa: latest
           ansible.builtin.git:
             repo: https://github.com/amnoth/dotfiles.git
@@ -293,10 +323,3 @@
             stow --adopt .
             git restore .
             stow .
-    
-        # todo:
-        #   php
-        #   typescript
-        #   swift
-        #   go
-        #   rust
