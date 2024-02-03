@@ -151,11 +151,12 @@
               - unzip
               - curl
             state: present
-        - name: neovim | git clone and checkout stable
+        - name: neovim | git clone and checkout stable # noqa: latest
           ansible.builtin.git:
-            repo: https://github.com/neovim/neovim.git
+            repo: https://github.com/neovim/neovim
             dest: ~/src/neovim
             version: stable
+            force: true
         - name: neovim | build stable release & install from deb package
           ansible.builtin.shell: |
             make CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -255,6 +256,56 @@
           ansible.builtin.apt:
             name: nodejs
             state: present
+        # golang
+        - name: dev tools | go | install
+          ansible.builtin.apt:
+            name: golang
+            state: present
+        - name: dev tools | go | add /usr/local/go/bin to path
+          ansible.builtin.copy:
+            content: "export PATH=$PATH:/usr/local/go/bin"
+            dest: "/etc/profile.d/user-local-go-bin.sh"
+            owner: root
+            group: root
+            mode: "0644"
+        # php
+        - name: dev tools | php
+          become: true
+          block:
+            - name: dev tools | php | add apt ppa
+              ansible.builtin.apt_repository:
+                repo: ppa:ondrej/php
+            - name: dev tools | php | install
+              ansible.builtin.apt:
+                name:
+                  - php8.3
+                  - php8.3-bcmath
+                  - php8.3-bz2
+                  - php8.3-cli
+                  - php8.3-common
+                  - php8.3-curl
+                  - php8.3-dev
+                  - php8.3-gd
+                  - php8.3-grpc
+                  - php8.3-ldap
+                  - php8.3-mbstring
+                  - php8.3-mysql
+                  - php8.3-odbc
+                  - php8.3-opcache
+                  - php8.3-pgsql
+                  - php8.3-protobuf
+                  - php8.3-redis
+                  - php8.3-snmp
+                  - php8.3-sqlite3
+                  - php8.3-uploadprogress
+                  - php8.3-uuid
+                  - php8.3-xdebug
+                  - php8.3-xml
+                  - php8.3-yaml
+                  - php8.3-zip
+                state: present
+                update_cache: true
+                cache_valid_time: 3600
     # user config
     - name: user config
       become: true
