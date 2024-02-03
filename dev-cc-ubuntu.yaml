@@ -5,27 +5,15 @@ packages:
   - curl
   - git
   - qemu-guest-agent
-  - software-properties-common
-  - zsh
+  - software-properties-common # Required for ansible
 runcmd:
   - [systemctl, enable, --now, qemu-guest-agent.service]
-users:
-  - default
-  - name: amnoth
-    gecos: Amnoth
-    shell: /bin/zsh
-    lock_passwd: true
-    groups:
-      - sudo
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    ssh_import_id:
-      - gh:amnoth
 ansible:
   package_name: ansible
   install_method: distro
   pull:
     url: "https://github.com/amnoth/ansible-test.git"
-    playbook_name: dev.yaml
+    playbook_name: dev-ubuntu.yaml
     connection: local
 apt:
   sources:
