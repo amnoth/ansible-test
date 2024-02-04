@@ -244,17 +244,30 @@
             name: nodejs
             state: present
         # golang
-        - name: dev tools | go | install
-          ansible.builtin.apt:
-            name: golang
-            state: present
-        - name: dev tools | go | add /usr/local/go/bin to path
-          ansible.builtin.copy:
-            content: "export PATH=$PATH:/usr/local/go/bin"
-            dest: "/etc/profile.d/user-local-go-bin.sh"
-            owner: root
-            group: root
-            mode: "0644"
+        - name: dev tools | go
+          become: true
+          block:
+            - name: dev tools | go | download
+              ansible.builtin.get_url:
+                url: https://golang.org/dl/go{{ go_version }}.linux-{{ deb_architecture }}.tar.gz
+                dest: /tmp/go.tar.gz
+                mode: "0644"
+                checksum: "sha256:{{ go_version_sha256 }}"
+              vars:
+                go_version: "1.21.6"
+                go_version_sha256: "3f934f40ac360b9c01f616a9aa1796d227d8b0328bf64cb045c7b8c4ee9caea4"
+            - name: dev tools | go | extract
+              ansible.builtin.unarchive:
+                src: /tmp/go.tar.gz
+                dest: /usr/local
+                creates: "/usr/local/go/bin/go"
+            - name: dev tools | go | add /usr/local/go/bin to path
+              ansible.builtin.copy:
+                content: "export PATH=$PATH:/usr/local/go/bin"
+                dest: "/etc/profile.d/user-local-go-bin.sh"
+                owner: root
+                group: root
+                mode: "0644"
         # php
         - name: dev tools | php
           become: true
@@ -332,7 +345,7 @@
                 extra_opts:
                   - "--strip-components=1"
                 remote_src: true
-                creates: "/tmp/swift/usr/bin/swift"
+                creates: "/usr/bin/swift"
             - name: dev tools| swift | set chmod 755 /usr/lib/swift
               ansible.builtin.file:
                 path: "/usr/lib/swift"
