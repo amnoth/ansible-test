@@ -176,19 +176,6 @@
           community.general.alternatives:
             name: editor
             path: /usr/bin/nvim
-    # (deprecated) neovim - ppa is too old!
-    # - name: neovim
-    #   become: true
-    #   block:
-    #     - name: neovim | add apt ppa
-    #       ansible.builtin.apt_repository:
-    #         repo: ppa:neovim-ppa/stable
-    #     - name: neovim | install
-    #       ansible.builtin.apt:
-    #         name: neovim
-    #         state: present
-    #         update_cache: true
-    #         cache_valid_time: 3600
     # user
     - name: users
       become: true
@@ -306,6 +293,51 @@
                 state: present
                 update_cache: true
                 cache_valid_time: 3600
+        - name: dev tools | swift
+          become: true
+          block:
+            # swift (todo: add key check, and arm64 check)
+            - name: dev tools| swift | install prerequisites
+                # https://download.swift.org/swift-{{ swift_version  }}-release/ubuntu2204/swift-{{ swift_version  }}-RELEASE/swift-{{ swift_version  }}-RELEASE-ubuntu22.04.tar.gz
+              ansible.builtin.apt:
+                name:
+                  - binutils
+                  - git
+                  - gnupg2
+                  - libc6-dev
+                  - libcurl4-openssl-dev
+                  - libedit2
+                  - libgcc-9-dev
+                  - libpython3.10 # libpython3.8
+                  - libsqlite3-0
+                  - libstdc++-9-dev
+                  - libxml2-dev
+                  - libz3-dev
+                  - pkg-config
+                  - tzdata
+                  - unzip
+                  - zlib1g-dev
+                state: present
+            - name: dev tools| swift | download
+              vars:
+                swift_version: "5.9.2"
+              ansible.builtin.get_url:
+                url: "https://download.swift.org/swift-{{ swift_version }}-release/ubuntu2204/swift-{{ swift_version }}-RELEASE/swift-{{ swift_version }}-RELEASE-ubuntu22.04.tar.gz"
+                dest: "/tmp/swift.tar.gz"
+                mode: "0644"
+            - name: dev tools| swift | extract
+              ansible.builtin.unarchive:
+                src: "/tmp/swift.tar.gz"
+                dest: "/"
+                extra_opts:
+                  - "--strip-components=1"
+                remote_src: true
+                creates: "/tmp/swift/usr/bin/swift"
+            - name: dev tools| swift | set chmod 755 /usr/lib/swift
+              ansible.builtin.file:
+                path: "/usr/lib/swift"
+                recurse: true
+                mode: "0755"
     # user config
     - name: user config
       become: true
